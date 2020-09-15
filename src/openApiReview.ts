@@ -19,9 +19,9 @@ class OpenApiReview {
 
   private async getDiff() {
     const diff = await this.gitClient.getPullRequestDiff({
-      owner: this.context.pullRequest.base.repo.owner.login,
-      repo: this.context.pullRequest.base.repo.name,
-      number: this.context.pullRequest.number,
+      owner: this.context.pullRequest.base.repoOwner,
+      repo: this.context.pullRequest.base.repoName,
+      pullRequestId: this.context.pullRequest.id,
     });
     return parseDiff(diff);
   }
@@ -60,8 +60,8 @@ class OpenApiReview {
       const pr = this.context.pullRequest[version];
       const content = await this.gitClient.getFileContent({
         path,
-        owner: pr.repo.owner.login,
-        repo: pr.repo.name,
+        owner: pr.repoOwner,
+        repo: pr.repoName,
         ref: pr.ref,
       });
       const spec: any = parseYaml(content);
@@ -194,9 +194,9 @@ ${docs}
 `;
 
     await this.gitClient.createPullRequestComment({
-      owner: this.context.pullRequest.base.repo.owner.login,
-      repo: this.context.pullRequest.base.repo.name,
-      number: this.context.pullRequest.number,
+      owner: this.context.pullRequest.base.repoOwner,
+      repo: this.context.pullRequest.base.repoName,
+      pullRequestId: this.context.pullRequest.id,
       comment,
     });
   }

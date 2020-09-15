@@ -2,7 +2,7 @@ interface IGitClient {
   getPullRequestDiff(options: {
     owner: string;
     repo: string;
-    number: string;
+    pullRequestId: string;
   }): Promise<string>;
 
   getFileContent(options: {
@@ -15,7 +15,7 @@ interface IGitClient {
   createPullRequestComment(options: {
     owner: string;
     repo: string;
-    number: string;
+    pullRequestId: string;
     comment: string;
   }): Promise<void>;
 }
@@ -32,12 +32,8 @@ interface IIoManager {
 }
 
 interface IPrVersion {
-  repo: {
-    owner: {
-      login: string;
-    };
-    name: string;
-  };
+  repoOwner: string;
+  repoName: string;
   ref: string;
 }
 
@@ -45,7 +41,7 @@ interface IContext {
   pullRequest?: {
     base: IPrVersion;
     head: IPrVersion;
-    number: string;
+    id: string;
   };
 }
 
