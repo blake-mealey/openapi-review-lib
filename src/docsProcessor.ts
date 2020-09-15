@@ -65,12 +65,12 @@ function findMatchingDifference(
     return;
   }
 
-  return diffs.find(
+  return diffs.some(
     (diff) =>
-      diff.sourceSpecEntityDetails.find(({ location }) =>
+      diff.sourceSpecEntityDetails.some(({ location }) =>
         location.startsWith(operationLocation)
       ) ||
-      diff.destinationSpecEntityDetails.find(({ location }) =>
+      diff.destinationSpecEntityDetails.some(({ location }) =>
         location.startsWith(operationLocation)
       )
   );
