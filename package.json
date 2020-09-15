@@ -1,0 +1,30 @@
+{
+  "name": "openapi-review-lib",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "ncc build src/index.ts",
+    "build:watch": "npm run build -- --watch"
+  },
+  "author": "Blake Mealey",
+  "license": "MIT",
+  "dependencies": {
+    "@types/js-yaml": "^3.12.5",
+    "@types/node": "^14.10.1",
+    "js-yaml": "^3.14.0",
+    "openapi-diff": "^0.23.3",
+    "remark": "^12.0.1",
+    "unist-builder": "^2.0.3",
+    "unist-util-find": "^1.0.1",
+    "unist-util-is": "^4.0.2",
+    "unist-util-visit": "^2.0.3",
+    "what-the-diff": "^0.6.0",
+    "widdershins": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/unist": "^2.0.3",
+    "@zeit/ncc": "^0.22.3"
+  }
+}
