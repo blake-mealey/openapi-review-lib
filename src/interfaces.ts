@@ -1,9 +1,10 @@
 interface IGitClient {
-  getPullRequestDiff(options: {
+  getChangedFiles(options: {
     owner: string;
     repo: string;
     pullRequestId: string;
-  }): Promise<string>;
+    paths: string[];
+  }): Promise<string[]>;
 
   getFileContent(options: {
     path: string;
@@ -21,13 +22,6 @@ interface IGitClient {
 }
 
 interface IIoManager {
-  getInput(
-    key: string,
-    options?: {
-      required?: boolean;
-      default?: any;
-    }
-  ): any;
   setFailed(error: Error): void;
 }
 
@@ -43,6 +37,9 @@ interface IContext {
     head: IPrVersion;
     id: string;
   };
+  converterOptions?: any;
+  specPaths: string[];
+  failOnBreakingChanges?: boolean;
 }
 
 export { IGitClient, IIoManager, IContext };

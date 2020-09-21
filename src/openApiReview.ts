@@ -1,5 +1,4 @@
 import { IGitClient, IContext, IIoManager } from "./interfaces";
-import { parse as parseDiff } from "what-the-diff";
 import {
   diffSpecs,
   OpenApiDiffOptions,
@@ -16,42 +15,6 @@ class OpenApiReview {
     private ioManager: IIoManager,
     private context: IContext
   ) {}
-
-  private async getDiff() {
-    const diff = await this.gitClient.getPullRequestDiff({
-      owner: this.context.pullRequest.base.repoOwner,
-      repo: this.context.pullRequest.base.repoName,
-      pullRequestId: this.context.pullRequest.id,
-    });
-    return parseDiff(diff);
-  }
-
-  private didFileChange(diff: any, path: string): boolean {
-    function makeRelative(str: string) {
-      return str.replace(/^\w+\//, "./");
-    }
-
-    return diff.find(
-      (file: { oldPath?: string; newPath?: string }) =>
-        (file.oldPath && makeRelative(file.oldPath) === path) ||
-        (file.newPath && makeRelative(file.newPath) === path)
-    );
-  }
-
-  private async getChangedSpecs(): Promise<string[]> {
-    const diff = await this.getDiff();
-
-    let specPaths: string | string[] = this.ioManager.getInput("spec-paths", {
-      required: true,
-    });
-    if (typeof specPaths === "string") {
-      specPaths = [specPaths];
-    }
-
-    return specPaths.filter((specPath: string) => {
-      return this.didFileChange(diff, specPath);
-    });
-  }
 
   private async getSpecVersions(path: string): Promise<OpenApiDiffOptions> {
     const getVersion = async (
@@ -86,9 +49,10 @@ class OpenApiReview {
   }
 
   private failOnBreakingChanges(specPath: string, specsDiff: DiffOutcome) {
-    const shouldFail = this.ioManager.getInput("fail-on-breaking-changes", {
-      default: true,
-    });
+    let shouldFail = this.context.failOnBreakingChanges;
+    if (shouldFail === undefined || shouldFail === null) {
+      shouldFail = true;
+    }
 
     if (specsDiff.breakingDifferencesFound && shouldFail) {
       this.ioManager.setFailed(
@@ -112,7 +76,7 @@ class OpenApiReview {
       tocSummary: true,
       codeSamples: false,
       language_tabs: [],
-      ...this.ioManager.getInput("converter-options", { default: {} }),
+      ...(this.context.converterOptions || {}),
     };
     let docs = await converter.convert(
       (specVersions.destinationSpec as any).spec,
@@ -207,7 +171,12 @@ ${docs}
         throw new Error("Missing PR context");
       }
 
-      const changedSpecs = await this.getChangedSpecs();
+      const changedSpecs = await this.gitClient.getChangedFiles({
+        owner: this.context.pullRequest.base.repoOwner,
+        repo: this.context.pullRequest.base.repoName,
+        pullRequestId: this.context.pullRequest.id,
+        paths: this.context.specPaths,
+      });
       await Promise.all(changedSpecs.map((spec) => this.processSpec(spec)));
     } catch (error) {
       this.ioManager.setFailed(error);
