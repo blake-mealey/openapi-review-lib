@@ -69,7 +69,8 @@ class OpenApiReview {
 
   private async getSpecDocs(
     specVersions: OpenApiDiffOptions,
-    specsDiff: DiffOutcome
+    specsDiff: DiffOutcome,
+    specPath: string
   ) {
     const converterOptions = {
       omitHeader: true,
@@ -86,9 +87,10 @@ class OpenApiReview {
       await processDocs(
         docs,
         Object.values(specVersions).map((spec) => (spec as any).spec),
-        specsDiff
+        specsDiff,
+        specPath
       )
-    ).contents;
+    ).contents.toString();
   }
 
   private async processSpec(specPath: string) {
@@ -100,68 +102,13 @@ class OpenApiReview {
     const specsDiff = await diffSpecs(specVersions);
     this.failOnBreakingChanges(specPath, specsDiff);
 
-    const docs = await this.getSpecDocs(specVersions, specsDiff);
-
-    const changesTable = {
-      breaking: {
-        link: "[Breaking](https://www.npmjs.com/package/openapi-diff#breaking)",
-        count: specsDiff.breakingDifferencesFound
-          ? specsDiff.breakingDifferences.length
-          : 0,
-      },
-      nonBreaking: {
-        link:
-          "[Non-breaking](https://www.npmjs.com/package/openapi-diff#non-breaking)",
-        count: specsDiff.nonBreakingDifferences
-          ? specsDiff.nonBreakingDifferences.length
-          : 0,
-      },
-      unclassified: {
-        link:
-          "[Unclassified](https://www.npmjs.com/package/openapi-diff#unclassified)",
-        count: specsDiff.unclassifiedDifferences
-          ? specsDiff.unclassifiedDifferences.length
-          : 0,
-      },
-    };
-
-    const comment = `
-# OpenAPI Review
-
-> **Spec: ${specPath}**
-
-## OpenAPI Diff
-
-> ⚡ Powered by [openapi-diff](https://bitbucket.org/atlassian/openapi-diff)
-
-${specsDiff.breakingDifferencesFound ? "🚨 **BREAKING CHANGES** 🚨" : ""}
-
-| Change Classification             | Count                              |
-| --------------------------------- | ---------------------------------- |
-| ${changesTable.breaking.link}     | ${changesTable.breaking.count}     |
-| ${changesTable.nonBreaking.link}  | ${changesTable.nonBreaking.count}  |
-| ${changesTable.unclassified.link} | ${changesTable.unclassified.count} |
-
-<details>
-<summary>Diff</summary>
-
-\`\`\`json
-${JSON.stringify(specsDiff, null, 2)}
-\`\`\`
-</details>
-
-## OpenAPI Docs
-
-> ⚡ Powered by [widdershins](https://github.com/Mermade/widdershins)
-
-${docs}
-`;
+    const docs = await this.getSpecDocs(specVersions, specsDiff, specPath);
 
     await this.gitClient.createPullRequestComment({
       owner: this.context.pullRequest.base.repoOwner,
       repo: this.context.pullRequest.base.repoName,
       pullRequestId: this.context.pullRequest.id,
-      comment,
+      comment: docs,
     });
   }
 
